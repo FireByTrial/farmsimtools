@@ -1,4 +1,4 @@
-#Farming Simulator Tools
+# Farming Simulator Tools
 
 ## Notice
 these tools are in development, they will have bugs, the bugs can be created on GitHub issues
@@ -6,7 +6,7 @@ these tools are in development, they will have bugs, the bugs can be created on 
 **These tools are not intended for users of the map, they are for creating/modifying maps**. specific
 workflows utilizing QGIS are the intended target of this project
 
-### Abstract
+#### Abstract
 this tool is intended to provide useful tools for working with GiantsEditor
 
 #### Forest Generator

@@ -1,5 +1,8 @@
 # Farming Simulator Tools
 
+** BACK UP YOUR MAP BEFORE FIRST RUN ** 
+Not responsible for any lost work/data, this has been tested to some extent, but I cannot guarantee it won't cause some issues with your i3d file as it does overwrite it with one it creates.
+
 ## Notice
 these tools are in development, they will have bugs, the bugs can be created on GitHub issues
 

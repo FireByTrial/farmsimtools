@@ -27,5 +27,3 @@ baseTrees
     - spruce_stage1
     ...
 ```
-
-there is a known issue with the weights being assigned to the wrong tree type

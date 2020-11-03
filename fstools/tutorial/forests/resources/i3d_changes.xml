@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<i3D name="example_data">
+    <Files>
+    <File fileId="10000" filename="mapDE/forests.png"></File>
+    </Files>
+    <Scene>
+        <TerrainTransformGroup>
+            <Layers>
+                <!-- DO NOT CALL THIS `autoForests` it will end bad -->
+                <InfoLayer name="autoForestLayer" fileId="10000" numChannels="8"/>
+            </Layers>
+        </TerrainTransformGroup>
+
+        <TransformGroup name="baseTrees"/> <!-- create this in GE as per docs-->
+        <TransformGroup name="autoForests"/> <!-- create this in GE as per docs, this will be overwritten every run!-->
+    </Scene>
+</i3D>
+

@@ -4,7 +4,7 @@ import os
 from xmltodict import parse, unparse
 
 
-def applyKeyName(obj: dict, key: str, callback: callable, parents: list = None) -> dict:
+def map_to_key(obj: dict, key: str, callback: callable, parents: list = None):
     if key in obj:
         if parents is not None:
             callback((obj, parents))
@@ -16,10 +16,10 @@ def applyKeyName(obj: dict, key: str, callback: callable, parents: list = None) 
             new_parents = parents.copy()
             new_parents.append(sub)
         if isinstance(val, dict):
-            applyKeyName(val, key, callback, parents=new_parents)
+            map_to_key(val, key, callback, parents=new_parents)
         elif isinstance(val, list):
             for record in val:
-                applyKeyName(record, key, callback, parents=new_parents)
+                map_to_key(record, key, callback, parents=new_parents)
 
 
 def read(path: str, *args, **kwargs) -> dict:
@@ -29,14 +29,14 @@ def read(path: str, *args, **kwargs) -> dict:
     return source_i3d
 
 
-def write(i3d_contents: dict, path: str, *args, **kwargs) -> str:
+def write(i3d_contents: dict, path: str, *args, **kwargs):
     with open(path, "w") as fo:
         unparse(i3d_contents, output=fo, pretty=True, indent=' ', *args, **kwargs)
 
 
 def get_for_type(type: str, i3d: dict) -> list:
     found = []
-    applyKeyName(obj=i3d, key=type, callback=found.append)
+    map_to_key(obj=i3d, key=type, callback=found.append)
     return found
 
 
@@ -49,7 +49,7 @@ def get_for_key(key: str, value: str, i3d: dict) -> list:
         if isinstance(obj, dict) and key in obj and obj[key] == value:
             found.append((obj, parents))
 
-    applyKeyName(obj=i3d, key=key, callback=check_key, parents=[])
+    map_to_key(obj=i3d, key=key, callback=check_key, parents=[])
     return found
 
 
@@ -62,7 +62,7 @@ def get_for_id():
         if isinstance(obj, dict) and key in obj and obj[key] == value:
             found.append((obj, parents))
 
-    applyKeyName(obj=i3d, key=key, callback=check_key, parents=[])
+    map_to_key(obj=i3d, key=key, callback=check_key, parents=[])
     return found
 
 
@@ -107,9 +107,8 @@ class TransformGroup:
         transform_group[label or self.default_label] = children
         return transform_group
 
-    def get_transform_group(self, data, target) -> tuple:
-        ttg = get_for_type(target, data)
-        return ttg
+    def get_transform_group(self, data, target) -> list:
+        return get_for_type(target, data)
 
     def get_by_name(self, name: str, i3d: dict = None):
         return get_for_key(key=self.name, value=name, i3d=i3d or self.data)
@@ -121,8 +120,8 @@ class Terrain(TransformGroup):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def get_transform_group(self, data: dict = None):
-        return super().get_transform_group(data=data or self.data, target=self.target)
+    def get_transform_group(self, data: dict = None, target=None):
+        return super().get_transform_group(data=data or self.data, target= target or self.target)
 
     def get_dem_files(self):
         tg = self.get_transform_group()

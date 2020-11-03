@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<forests>
+    <!--
+    this works just like farmlands, create a row per bitmap in the png. you will have to convert the exported grle
+    to a png using the grle converter provided on the gdn
+    -->
+	<forest id="1" minSize="1" maxSize="4" densMult="0.60" wgtPine="0.10" wgtSpruce="0.90" wgtMaple="0.0" wgtBirch="0.0" />
+	<forest id="2" minSize="1" maxSize="3" densMult="0.40" wgtPine="0.11" wgtSpruce="0.87" wgtMaple="0.01" wgtBirch="0.01" />
+</forests>

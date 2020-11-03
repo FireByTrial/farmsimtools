@@ -9,6 +9,7 @@ from pathlib import Path
 import numpy
 import shapefile
 
+from fstools.generate.forests.xml_parser import XmlForests
 from fstools.i18n import _
 from fstools.util import i3d
 from fstools.util import simple_rasters
@@ -17,12 +18,22 @@ from fstools.util.shapeutil import shape_components, shape_readers
 
 
 class ForestGenerator:
-    def __init__(self, i3d_fn: str, tree_source: str, raster_source: Path, shape: str = None):
+    def __init__(self, i3d_fn: str, tree_source: str, raster_source: Path, shape: str = None, xml_raster_metadata: str = None):
+        """
+        takes a i3d file and creates forests automatically based on a combination of either shp or xml data with a
+        raster layer input to specify locations of the forests
+        :param i3d_fn: path to an i3d file (not the data itself)
+        :param tree_source: the source TransformGroup name to pull the trees from
+        :param raster_source: a png or tiff that matches the DEM file in the i3d file
+        :param shape: a shapefile that the raster_source that was exported from a GIS app with corresponding metadata
+        :param xml_raster_metadata: a xml file that corresponds with the infoLayer png (raster_source)
+        """
         super().__init__()
         self.i3d_data = i3d.TransformGroup(file=i3d_fn)
         self.terrain = i3d.Terrain(i3d=self.i3d_data.data)
         self.tree_source = tree_source
         self.shp = shape
+        self.xml_raster_metadata = xml_raster_metadata
         self.raster = simple_rasters.read_img(raster_source)
         self.global_density_factor = 0.3  # 0.6 is good for a realistic 'feel' but it's not great for gameplay
         self.dem_files = self.terrain.get_dem_files()
@@ -46,6 +57,17 @@ class ForestGenerator:
     def trees(self):
         return self.i3d_data.get_by_name(self.tree_source).copy()
 
+    def read_records(self, path: str = None):
+        if (path and "xml" in path) or self.xml_raster_metadata:
+            return list(self.read_xml(path))
+        elif (path and "shp" in path) or self.shp:
+            return self.read_shp(path)
+        else:
+            raise AssertionError("a shp or xml file must be provided")
+
+    def read_xml(self, path: str = None):
+        return XmlForests(xml_file=path or self.xml_raster_metadata).get_records()
+
     def read_shp(self, path: str = None):
         with shape_readers(**shape_components(path or self.shp)) as readers:
             reader = shapefile.Reader(**readers)
@@ -54,7 +76,7 @@ class ForestGenerator:
         return self.__shp_records
 
     def run(self, shp_key: str = "id", target_ids: list = None):
-        records = self.read_shp()
+        records = self.read_records()
         target_records = target_ids or []
         if not target_records:
             target_records.extend([getattr(x.record, shp_key) for x in records])
@@ -62,7 +84,7 @@ class ForestGenerator:
         forest_number = 0
         ident = 100000
         transform = TransformGroup()
-        tree_species = self.trees[0][0][transform.default_label]
+        # tree_species = self.trees[0][0][transform.default_label]
         rand_array = numpy.random.randint(0, len(target_records) - 1, self.raster.shape)
         for record in records:
             if record.record.id not in target_records:
@@ -79,7 +101,7 @@ class ForestGenerator:
     def generateMask(self, record: shapefile.ShapeRecord, rand_array: numpy.ndarray, species: list = [],
                      weighting: list = []):
         transform = TransformGroup()
-        mask = numpy.ma.equal(self.raster, record.record.id)
+        mask = numpy.ma.equal(self.raster, int(record.record.id))
         aoi = rand_array * mask
         masked = aoi * self.prune_neighbors(aoi)
         log_choice = numpy.flip(numpy.logspace(0, 1, len(species), base=10))
@@ -105,24 +127,13 @@ class ForestGenerator:
 
     def generate(self, record: shapefile.ShapeRecord, rand_array: numpy.ndarray, forest_number: int = 1,
                  id_start: int = 1000000, gitter=1.25, z_offset=-0.05):  # , tree_types:list =[]):
-        def min_max_extent(i):
-            return [math.floor(record.shape.bbox[i]), math.ceil(record.shape.bbox[i + 2])]
-
         print(_("processing forest #" + str(forest_number)))
-
-        _x = min_max_extent(0)
-        _y = min_max_extent(1)
-        dims = {
-            'x': max(_x) - min(_x),
-            'y': max(_y) - min(_y)
-        }
         transform = TransformGroup()
         terrain_pixel_scale = float(self.terrain.get_transform_group()[0][transform.prefix('unitsPerPixel')])
         prefix = 'base'
         forest = transform.new_transform_group(name=f"forest{forest_number}", identifier=id_start, children=[])
         id_start += 1
         trees = self.trees[0][0][transform.default_label]
-        length = len(trees)
         tree_names = list(map(lambda x: x[transform.name].lstrip(prefix), trees))
         tree_weights = list(map("wgt{}".format, tree_names))
         weights = [0.37, 0.53, 0.07, 0.03]
@@ -142,9 +153,7 @@ class ForestGenerator:
                 print(_("weights do not sum to 1.0 for {}").format(record.record.id))
         tree_count = {}
         for loc in self.generateMask(record=record, rand_array=rand_array, species=trees, weighting=weights):
-            # print("x: {x}; y: {y}, z: {z}".format(**loc))
-            # tree_number = min(len(trees), int(loc['z']) - 1)
-            clone_tree = loc['z'].copy()  # trees[tree_number].copy()
+            clone_tree = loc['z'].copy()
             tree_tg = clone_tree[transform.default_label]
             no_prefix = clone_tree[transform.name].lstrip(prefix).lower()
             tree_count.setdefault(no_prefix, {})
@@ -225,9 +234,12 @@ class ForestGenerator:
 if __name__ == "__main__":
     i3d_file = Path(r"D:\Games\MyMods\Sussex\maps\mapNB.i3d")
     i3d_tree_sources = "baseTrees"
-    shp = Path(r"D:\Games\MyMods\Sussex\reference\geospatial\forestry.shp")
-    rasterized = Path(r"D:\Games\MyMods\Sussex\reference\geospatial\forestryRaster.tif")
-    fg = ForestGenerator(i3d_file, i3d_tree_sources, rasterized, shp)
+    #shp = Path(r"D:\Games\MyMods\Sussex\reference\geospatial\forestry.shp")
+    shp = None
+    #rasterized = Path(r"D:\Games\MyMods\Sussex\reference\geospatial\forestryRaster.tif")
+    rasterized = Path(r"D:\Games\MyMods\Sussex\maps\mapNB1\forests.png")
+    xml_fn = Path(r"D:\Games\MyMods\Sussex\xml\forests.xml")
+    fg = ForestGenerator(i3d_file, i3d_tree_sources, rasterized, shp, xml_raster_metadata=xml_fn)
     fg.run()
     # target_fn = os.path.join(os.path.dirname(i3d_file), "forest_" + os.path.basename(i3d_file))
     target_fn = os.path.join(os.path.dirname(i3d_file), os.path.basename(i3d_file))

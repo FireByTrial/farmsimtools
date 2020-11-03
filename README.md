@@ -1,4 +1,7 @@
-#Farming Simulator Tools
+# Farming Simulator Tools
+
+** BACK UP YOUR MAP BEFORE FIRST RUN ** 
+Not responsible for any lost work/data, this has been tested to some extent, but I cannot guarantee it won't cause some issues with your i3d file as it does overwrite it with one it creates.
 
 ## Notice
 these tools are in development, they will have bugs, the bugs can be created on GitHub issues
@@ -6,7 +9,7 @@ these tools are in development, they will have bugs, the bugs can be created on 
 **These tools are not intended for users of the map, they are for creating/modifying maps**. specific
 workflows utilizing QGIS are the intended target of this project
 
-### Abstract
+#### Abstract
 this tool is intended to provide useful tools for working with GiantsEditor
 
 #### Forest Generator
@@ -27,5 +30,3 @@ baseTrees
     - spruce_stage1
     ...
 ```
-
-there is a known issue with the weights being assigned to the wrong tree type

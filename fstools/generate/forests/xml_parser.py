@@ -6,7 +6,10 @@ from fstools.util.i3d import TransformGroup
 def cast_to_float(val: str):
     if isinstance(val, str):
         if val.replace('.', '', 1).isdigit():
-            return float(val)
+            if '.' in val or 'e-' in val:
+                return float(val)
+            else:
+                return int(val)
     return val
 
 
@@ -23,7 +26,7 @@ class XmlMetadata(TransformGroup):
 
     @property
     def _record_data(self):
-        return {k.lstrip(self._prefix): v for k, v in self._prefixed.items()}
+        return {k.lstrip(self._prefix): cast_to_float(v) for k, v in self._prefixed.items()}
 
     @property
     def _prefixed(self) -> dict:

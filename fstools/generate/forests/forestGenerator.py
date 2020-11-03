@@ -101,7 +101,7 @@ class ForestGenerator:
     def generateMask(self, record: shapefile.ShapeRecord, rand_array: numpy.ndarray, species: list = [],
                      weighting: list = []):
         transform = TransformGroup()
-        mask = numpy.ma.equal(self.raster, int(record.record.id))
+        mask = numpy.ma.equal(self.raster, record.record.id)
         aoi = rand_array * mask
         masked = aoi * self.prune_neighbors(aoi)
         log_choice = numpy.flip(numpy.logspace(0, 1, len(species), base=10))
@@ -205,13 +205,13 @@ class ForestGenerator:
         print(_("pruning values..."))
         for (x, y), item in numpy.ndenumerate(arr):
             summed = 0
-            if arr[x][y] > 0:
+            if item > 0:
                 for xd in range(x-distance, x+distance+1):
                     if summed > 1:
                         continue
                     for yd in range(y-distance, y+distance+1):
                         with suppress(IndexError):
-                            summed += (1 if arr[x][y] > 0 else 0)
+                            summed += (1 if arr[xd][yd] > 0 else 0)
             comp_arr[x][y] = int(summed)
         mask = numpy.ma.greater(comp_arr, 1)
         print(_("pruned {}").format(mask.count()))

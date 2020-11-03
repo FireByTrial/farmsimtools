@@ -166,7 +166,12 @@ class ForestGenerator:
             tree_count[no_prefix][str(rand_choice)] += 1
             x_gitter = abs(random.random()) % (gitter - gitter * 2)
             y_gitter = abs(random.random()) % (gitter - gitter * 2)
-            z_val = self.dem[loc['x'], loc['y']] / (pow(2, 16) / pow(2, 8)) + z_offset
+            dem_values = []
+            for _x in range(loc['x']-1, loc['x']+2):
+                for _y in range(loc['y']-1, loc['y']+2):
+                    dem_values.append(self.dem[_x, _y])
+            dem_height = sum(sorted(dem_values[:2]))/2
+            z_val = dem_height / (pow(2, 16) / pow(2, 8)) + z_offset
             loc_str = "{x} {z} {y}".format(
                 **{
                     "x": ((float(loc['y']) - self.raster.shape[0] / 2) * terrain_pixel_scale) + x_gitter,
@@ -186,7 +191,7 @@ class ForestGenerator:
         print(json.dumps(tree_count, indent=2, sort_keys=True))
         return forest
 
-    def prune_neighbors(self, arr: numpy.ndarray, distance=1):
+    def prune_neighbors(self, arr: numpy.ndarray, distance=2):
         comp_arr = numpy.full(arr.shape, True, dtype=int)
         print(_("pruning values..."))
         for (x, y), item in numpy.ndenumerate(arr):

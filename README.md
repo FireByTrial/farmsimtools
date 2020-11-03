@@ -30,3 +30,7 @@ baseTrees
     - spruce_stage1
     ...
 ```
+
+### Tutorial
+see the corresponding tutorial documentation for how to get started:
+[Forest Generation](fstools/tutorial/forests/forest_tutorial.md)

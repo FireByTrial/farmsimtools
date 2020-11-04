@@ -75,7 +75,7 @@ class ForestGenerator:
             self.__shp_fields = reader.fields.copy()
         return self.__shp_records
 
-    def run(self, shp_key: str = "id", target_ids: list = None):
+    def run(self, shp_key: str = "id", target_ids: list = None, tree_density: int = 15):
         records = self.read_records()
         target_records = target_ids or []
         if not target_records:
@@ -84,8 +84,8 @@ class ForestGenerator:
         forest_number = 0
         ident = 100000
         transform = TransformGroup()
-        # tree_species = self.trees[0][0][transform.default_label]
-        rand_array = numpy.random.randint(0, len(target_records) - 1, self.raster.shape)
+        tree_species = self.trees[0][0][transform.default_label]
+        rand_array = numpy.random.randint(0, tree_density, self.raster.shape)
         for record in records:
             if record.record.id not in target_records:
                 continue
